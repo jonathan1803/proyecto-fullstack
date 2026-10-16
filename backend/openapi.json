@@ -1,0 +1,341 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/tasks": {
+      "post": {
+        "description": "Registra una tarea en el sistema. Si el título contiene la palabra \"Urgente\" (sin distinguir mayúsculas/minúsculas), el backend asigna automáticamente prioridad Alta. La fecha límite no puede ser anterior a hoy.",
+        "operationId": "TasksController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tarea registrada con éxito.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación (HTTP 400). Por ejemplo, fecha límite anterior al día actual o campos requeridos ausentes."
+          }
+        },
+        "summary": "Registrar una nueva tarea (RF-01, RF-02, RF-03)",
+        "tags": [
+          "Tareas (Tasks)"
+        ]
+      },
+      "get": {
+        "description": "Devuelve el listado de tareas que no han sido eliminadas lógicamente (soft deleted), ordenadas por fecha límite y creación.",
+        "operationId": "TasksController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Listado de tareas recuperado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar listado de tareas activas (RF-04)",
+        "tags": [
+          "Tareas (Tasks)"
+        ]
+      }
+    },
+    "/api/tasks/{id}": {
+      "get": {
+        "description": "Recupera la información de una tarea específica mediante su UUID.",
+        "operationId": "TasksController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID de la tarea",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarea encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No se encontró la tarea especificada."
+          }
+        },
+        "summary": "Consultar una tarea por ID",
+        "tags": [
+          "Tareas (Tasks)"
+        ]
+      },
+      "patch": {
+        "description": "Actualiza los campos de una tarea por su ID.",
+        "operationId": "TasksController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID de la tarea a actualizar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tarea actualizada exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Actualizar una tarea existente",
+        "tags": [
+          "Tareas (Tasks)"
+        ]
+      },
+      "delete": {
+        "description": "Aplica una eliminación lógica asignando fecha a deletedAt. La tarea deja de figurar en el listado activo pero se preserva la integridad histórica.",
+        "operationId": "TasksController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "UUID de la tarea a eliminar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarea eliminada lógicamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Tarea eliminada exitosamente."
+                    },
+                    "id": {
+                      "type": "string",
+                      "example": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No se encontró la tarea a eliminar."
+          }
+        },
+        "summary": "Eliminar una tarea mediante Soft Delete (RF-05)",
+        "tags": [
+          "Tareas (Tasks)"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "TaskAI - Sistema de Gestión de Tareas Inteligente",
+    "description": "Documentación OpenAPI interactiva de la API REST de TaskAI. Incluye reglas de negocio: Asignación automática de prioridad Alta para títulos con \"Urgente\" (RF-02), Validación de fecha límite no anterior a hoy (RF-03), y Soft Delete (RF-05).",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Tareas (Tasks)",
+      "description": "Operaciones de gestión, consulta y ciclo de vida de tareas"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateTaskDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Revisión Urgente del servidor de base de datos",
+            "description": "Título de la tarea. Si incluye la palabra \"Urgente\" (sin distinguir mayúsculas/minúsculas), el backend asignará automáticamente la prioridad Alta.",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "example": "Verificar logs de conexión y optimizar índices para mitigar latencia.",
+            "description": "Descripción detallada de la tarea a realizar."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "Baja",
+              "Media",
+              "Alta"
+            ],
+            "example": "Media",
+            "default": "Media",
+            "description": "Prioridad sugerida por el cliente (Baja, Media, Alta). Nota: Si el título contiene \"Urgente\", el backend sobreescribirá este valor forzando prioridad Alta."
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-10-25",
+            "description": "Fecha límite en formato YYYY-MM-DD. No puede ser anterior a la fecha actual. Se permite el día actual."
+          }
+        },
+        "required": [
+          "title",
+          "dueDate"
+        ]
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "description": "Identificador único de la tarea (UUID)"
+          },
+          "title": {
+            "type": "string",
+            "example": "Preparar informe Urgente de ventas",
+            "description": "Título de la tarea. Si contiene \"Urgente\", la prioridad se asigna automáticamente como Alta."
+          },
+          "description": {
+            "type": "string",
+            "example": "Detallar las ventas del último trimestre para la reunión con la junta directiva.",
+            "description": "Descripción detallada de la tarea",
+            "nullable": true
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "Baja",
+              "Media",
+              "Alta"
+            ],
+            "example": "Alta",
+            "description": "Nivel de prioridad de la tarea: Baja, Media, Alta"
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-10-20",
+            "description": "Fecha límite de cumplimiento en formato YYYY-MM-DD. No puede ser anterior a hoy."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-16T04:30:00.000Z",
+            "description": "Fecha y hora de creación del registro"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-16T04:30:00.000Z",
+            "description": "Fecha y hora de última actualización"
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": null,
+            "description": "Fecha de eliminación lógica (Soft Delete). Null si está activa.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "priority",
+          "dueDate",
+          "createdAt",
+          "updatedAt",
+          "deletedAt"
+        ]
+      },
+      "UpdateTaskDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Revisión Urgente del servidor de base de datos",
+            "description": "Título de la tarea. Si incluye la palabra \"Urgente\" (sin distinguir mayúsculas/minúsculas), el backend asignará automáticamente la prioridad Alta.",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "example": "Verificar logs de conexión y optimizar índices para mitigar latencia.",
+            "description": "Descripción detallada de la tarea a realizar."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "Baja",
+              "Media",
+              "Alta"
+            ],
+            "example": "Media",
+            "default": "Media",
+            "description": "Prioridad sugerida por el cliente (Baja, Media, Alta). Nota: Si el título contiene \"Urgente\", el backend sobreescribirá este valor forzando prioridad Alta."
+          },
+          "dueDate": {
+            "type": "string",
+            "example": "2026-10-25",
+            "description": "Fecha límite en formato YYYY-MM-DD. No puede ser anterior a la fecha actual. Se permite el día actual."
+          }
+        }
+      }
+    }
+  }
+}
