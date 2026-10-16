@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: taskai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-taskai_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - taskai_pgdata:/var/lib/postgresql/data
+
+volumes:
+  taskai_pgdata:
